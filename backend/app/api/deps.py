@@ -1,6 +1,8 @@
+import logging
 from typing import Annotated
 
 from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,9 +12,12 @@ from core.db import async_session_maker
 from core.security import verify_jwt_token
 from models import User
 
+logger = logging.getLogger(__name__)
+
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{config.api.api_v1_str}/login/access-token"
 )
+http_bearer = HTTPBearer()
 
 
 async def get_db() -> AsyncSession:
@@ -25,18 +30,24 @@ async def get_db() -> AsyncSession:
 
 SessionDep = Annotated[AsyncSession, Depends(get_db)]
 TokenDep = Annotated[str, Depends(reusable_oauth2)]
+HttpBearer = Annotated[HTTPAuthorizationCredentials, Depends(http_bearer)]
 
 
 async def get_current_user(session: SessionDep, token: TokenDep) -> User:
-    user_id = verify_jwt_token(token=token)
-    if user_id is None:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid token",
-            headers={
-                "WWW-Authenticate": "Bearer"
-            }
-        )
+    exp_401 = HTTPException(
+        status_code=401,
+        detail="Invalid token",
+        headers={
+            "WWW-Authenticate": "Bearer"
+        }
+    )
+    if (payload := verify_jwt_token(token=token)) is None:
+        raise exp_401
+    user_id, token_type = payload
+    if token_type != "access":
+        logger.info(f"Expected 'access' token, got {token_type!r}")
+        raise exp_401
+
     user = await session.scalar(select(User).filter_by(id=user_id))
     return user
 

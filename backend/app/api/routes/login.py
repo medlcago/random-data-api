@@ -1,17 +1,20 @@
+import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 
 from api.crud import users_crud
-from api.deps import SessionDep
-from core.security import create_jwt_token, verify_jwt_token
-from schemes.token import Token, TokenVerify
+from api.deps import SessionDep, HttpBearer
+from core.security import create_token, verify_jwt_token
+from schemes.token import TokenInfo, TokenVerify
 
 router = APIRouter()
 
+logger = logging.getLogger(__name__)
 
-@router.post("/login/access-token", response_model=Token)
+
+@router.post("/login/access-token", response_model=TokenInfo)
 async def login_access_token(
         session: SessionDep,
         form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
@@ -22,15 +25,39 @@ async def login_access_token(
             status_code=400,
             detail="Invalid login or password"
         )
-    jwt_token = create_jwt_token(user=user)
-    return Token(
-        access_token=jwt_token
+    access = create_token(user_id=user.id, token_type="access")
+    refresh = create_token(user_id=user.id, token_type="refresh")
+    return TokenInfo(
+        access_token=access,
+        refresh_token=refresh
     )
 
 
-@router.post("/login/access-token/verify")
-async def verify_access_token(request: TokenVerify):
-    if not verify_jwt_token(token=request.access_token):
+@router.post(
+    "/login/refresh-token",
+    response_model=TokenInfo,
+    response_model_exclude_none=True
+)
+async def refresh_access_token(http_bearer: HttpBearer):
+    exp_400 = HTTPException(
+        status_code=400,
+        detail="Invalid refresh token"
+    )
+    if (payload := verify_jwt_token(token=http_bearer.credentials)) is None:
+        raise exp_400
+    user_id, token_type = payload
+    if token_type != "refresh":
+        logger.info(f"Expected 'refresh' token, got {token_type!r}")
+        raise exp_400
+    access_token = create_token(user_id=user_id, token_type="access")
+    return TokenInfo(
+        access_token=access_token
+    )
+
+
+@router.post("/login/verify-token")
+async def verify_token(request: TokenVerify):
+    if (payload := verify_jwt_token(token=request.token)) is None:
         raise HTTPException(
             status_code=400,
             detail="Invalid token",
@@ -38,4 +65,9 @@ async def verify_access_token(request: TokenVerify):
                 "WWW-Authenticate": "Bearer"
             }
         )
-    return request
+    user_id, token_type = payload
+    return {
+        "message": "Token is valid",
+        "user_id": user_id,
+        "token_type": token_type
+    }

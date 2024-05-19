@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-from schemes.token import Token
+from schemes.token import TokenInfo
 
 
 class CreateUserRequest(BaseModel):
@@ -15,7 +15,7 @@ class CreateUserRequest(BaseModel):
 class CreateUserResponse(BaseModel):
     username: str
     telegram: str | None = None
-    token: Token
+    token: TokenInfo
 
 
 class ReadUserResponse(BaseModel):

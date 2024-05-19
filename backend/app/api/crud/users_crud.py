@@ -1,9 +1,9 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.security import hash_password, create_jwt_token, verify_password
+from core.security import hash_password, create_token, verify_password
 from models import User
-from schemes.token import Token
+from schemes.token import TokenInfo
 from schemes.user import CreateUserResponse, CreateUserRequest
 
 
@@ -22,13 +22,17 @@ async def create_user(*, session: AsyncSession, request: CreateUserRequest) -> C
         return
     request.password = hash_password(password=request.password)
     user = User(**request.model_dump())
-    jwt_token = create_jwt_token(user=user)
     session.add(user)
     await session.commit()
+
+    access_token = create_token(user_id=user.id, token_type="access")
+    refresh_token = create_token(user_id=user.id, token_type="refresh")
+
     return CreateUserResponse(
         **request.model_dump(),
-        token=Token(
-            access_token=jwt_token
+        token=TokenInfo(
+            access_token=access_token,
+            refresh_token=refresh_token
         )
     )
 
