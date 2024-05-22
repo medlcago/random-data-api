@@ -6,6 +6,7 @@ class UserUtil:
     def _generate_user_info(locale: str | None = None):
         fake = Faker(locale=locale)
 
+        user_id = fake.uuid4()
         name = fake.name()
         address = fake.address()
         email = fake.email()
@@ -15,6 +16,7 @@ class UserUtil:
         job = fake.job()
 
         user_info = {
+            "user_id": user_id,
             "name": name,
             "address": address,
             "email": email,
@@ -35,11 +37,7 @@ class UserUtil:
         return fake.profile()
 
     def generate_user_profile(self, locale: str | None = None, n: int = 1, simple: bool = True):
-        if n == 1:
-            return self._generate_user_profile(locale=locale, simple=simple)
         return [self._generate_user_profile(locale=locale, simple=simple) for _ in range(n)]
 
     def generate_user_info(self, locale: str | None = None, n: int = 1):
-        if n == 1:
-            return self._generate_user_info(locale=locale)
         return [self._generate_user_info(locale=locale) for _ in range(n)]

@@ -14,7 +14,7 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-@router.post("/login/access-token", response_model=TokenInfo)
+@router.post("/access-token", response_model=TokenInfo)
 async def login_access_token(
         session: SessionDep,
         form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
@@ -34,7 +34,7 @@ async def login_access_token(
 
 
 @router.post(
-    "/login/refresh-token",
+    "/refresh-token",
     response_model=TokenInfo,
     response_model_exclude_none=True
 )
@@ -55,7 +55,7 @@ async def refresh_access_token(http_bearer: HttpBearer):
     )
 
 
-@router.post("/login/verify-token")
+@router.post("/verify-token")
 async def verify_token(request: TokenVerify):
     if (payload := verify_jwt_token(token=request.token)) is None:
         raise HTTPException(

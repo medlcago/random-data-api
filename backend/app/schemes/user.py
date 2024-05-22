@@ -7,7 +7,7 @@ from schemes.token import TokenInfo
 
 
 class CreateUserRequest(BaseModel):
-    username: Annotated[str, Field(min_length=5, max_length=20)]
+    username: Annotated[str, Field(pattern="r^[a-zA-Z][\w]{4,31}$")]
     password: Annotated[str, Field(min_length=6)]
     telegram: Annotated[str | None, Field(pattern=r"^@[a-zA-Z][\w]{4,31}$")] = None
 
