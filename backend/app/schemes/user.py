@@ -20,7 +20,7 @@ class CreateUserResponse(BaseModel):
 
 class ReadUserResponse(BaseModel):
     id: int
-    username: str
+    email: EmailStr
     telegram: str | None
     is_admin: bool
     is_active: bool

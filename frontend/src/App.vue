@@ -1,5 +1,5 @@
 <template>
-  <div class="app">
+  <div class="app bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
     <RouterView/>
   </div>
 </template>
@@ -9,7 +9,5 @@ import {RouterView} from "vue-router";
 </script>
 
 <style scoped>
-.app {
-  background: linear-gradient(90deg, rgba(2, 0, 36, 1) 0%, rgba(70, 70, 200, 1) 35%, rgba(0, 212, 255, 1) 100%);
-}
+
 </style>

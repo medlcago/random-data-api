@@ -1,11 +1,15 @@
 <script setup>
 import {computed, ref, watch} from 'vue';
 import {useTitle} from "@vueuse/core";
+import {registerUser} from "@/services/user.js";
+import {useRouter} from "vue-router";
+
+const router = useRouter();
 
 useTitle("Регистрация");
 
 const registrationForm = ref({
-  username: "",
+  email: "",
   telegram: "",
   password: "",
   confirmPassword: ""
@@ -13,48 +17,51 @@ const registrationForm = ref({
 
 const passwordMatched = ref(true);
 const passwordVisible = ref(false);
+const emailAlreadyExists = ref(false);
 
 const togglePasswordVisibility = () => passwordVisible.value = !passwordVisible.value
 
 watch(() => [registrationForm.value.password, registrationForm.value.confirmPassword], ([newPassword, newConfirmPassword]) => {
-  console.log(newPassword);
   passwordMatched.value = newPassword === newConfirmPassword;
 })
 
 const isFormValid = computed(() => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const telegramRegex = /^@[a-zA-Z][\w]{4,31}$/;
-  const usernameRegex = /^[a-zA-Z][\w]{4,31}$/;
-  return usernameRegex.test(registrationForm.value.username) &&
-         telegramRegex.test(registrationForm.value.telegram) &&
-         registrationForm.value.password.length >= 6 &&
-         passwordMatched.value;
+  return emailRegex.test(registrationForm.value.email) &&
+      (!registrationForm.value.telegram || telegramRegex.test(registrationForm.value.telegram)) &&
+      registrationForm.value.password.length >= 6 &&
+      passwordMatched.value;
 });
 
-const register = () => {
-  console.log('Username:', registrationForm.value.username);
-  console.log('Telegram:', registrationForm.value.telegram);
-  console.log('Password:', registrationForm.value.password);
-  console.log('Confirm Password:', registrationForm.value.password);
+const register = async () => {
+  const response = await registerUser(registrationForm.value.email, registrationForm.value.telegram, registrationForm.value.password);
+  if (response) {
+    await router.replace("profile");
+  } else {
+    emailAlreadyExists.value = true;
+  }
 };
 </script>
 
 <template>
   <div class="flex justify-center items-center h-screen">
     <div class="w-full max-w-lg">
-      <form>
+      <form class="select-none">
         <div class="bg-white shadow-md rounded-lg px-8 pt-6 pb-8 mb-4">
           <div class="mb-4">
-            <label class="block text-gray-700 font-bold mb-2" for="username">
-              Имя пользователя
+            <label class="block text-gray-700 font-bold mb-2" for="email">
+              Email<span class="text-red-500 ml-1">*</span>
             </label>
             <input
                 class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-blue-500 focus:shadow-outline"
-                id="username"
-                type="text"
-                placeholder="Имя пользователя"
-                v-model.trim="registrationForm.username"
+                id="email"
+                type="email"
+                placeholder="example@example.com"
+                v-model.trim="registrationForm.email"
                 maxlength="32"
             />
+            <div class="text-red-700" v-if="emailAlreadyExists">Почта уже используется</div>
           </div>
           <div class="mb-4">
             <label class="block text-gray-700 font-bold mb-2" for="telegram">
@@ -71,7 +78,7 @@ const register = () => {
           </div>
           <div class="mb-4 relative">
             <label class="block text-gray-700 font-bold mb-2" for="password">
-              Пароль
+              Пароль<span class="text-red-500 ml-1">*</span>
             </label>
             <div class="relative">
               <input
@@ -126,7 +133,7 @@ const register = () => {
 
           <div class="mb-4">
             <label class="block text-gray-700 font-bold mb-2" for="confirmPassword">
-              Подтвердите пароль
+              Подтвердите пароль<span class="text-red-500 ml-1">*</span>
             </label>
             <input
                 class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-blue-500 focus:shadow-outline"
