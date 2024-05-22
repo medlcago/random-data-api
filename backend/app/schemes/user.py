@@ -1,19 +1,19 @@
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 
 from schemes.token import TokenInfo
 
 
 class CreateUserRequest(BaseModel):
-    username: Annotated[str, Field(pattern="r^[a-zA-Z][\w]{4,31}$")]
+    email: EmailStr
     password: Annotated[str, Field(min_length=6)]
     telegram: Annotated[str | None, Field(pattern=r"^@[a-zA-Z][\w]{4,31}$")] = None
 
 
 class CreateUserResponse(BaseModel):
-    username: str
+    email: EmailStr
     telegram: str | None = None
     token: TokenInfo
 

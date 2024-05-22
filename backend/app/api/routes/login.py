@@ -19,7 +19,7 @@ async def login_access_token(
         session: SessionDep,
         form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ):
-    user = await users_crud.authenticate(session=session, username=form_data.username, password=form_data.password)
+    user = await users_crud.authenticate(session=session, email=form_data.username, password=form_data.password)
     if user is None:
         raise HTTPException(
             status_code=400,
@@ -59,7 +59,7 @@ async def refresh_access_token(http_bearer: HttpBearer):
 async def verify_token(request: TokenVerify):
     if (payload := verify_jwt_token(token=request.token)) is None:
         raise HTTPException(
-            status_code=400,
+            status_code=401,
             detail="Invalid token",
             headers={
                 "WWW-Authenticate": "Bearer"

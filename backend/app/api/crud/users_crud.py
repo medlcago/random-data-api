@@ -7,8 +7,8 @@ from schemes.token import TokenInfo
 from schemes.user import CreateUserResponse, CreateUserRequest
 
 
-async def authenticate(*, session: AsyncSession, username: str, password: str) -> User | None:
-    user_obj = await get_user_by_username(session=session, username=username)
+async def authenticate(*, session: AsyncSession, email: str, password: str) -> User | None:
+    user_obj = await get_by_email(session=session, email=email)
     if not user_obj:
         return
     if not verify_password(plain_password=password, hashed_password=user_obj.password):
@@ -17,7 +17,7 @@ async def authenticate(*, session: AsyncSession, username: str, password: str) -
 
 
 async def create_user(*, session: AsyncSession, request: CreateUserRequest) -> CreateUserResponse | None:
-    user_obj = await get_user_by_username(session=session, username=request.username)
+    user_obj = await get_by_email(session=session, email=request.email)
     if user_obj:
         return
     request.password = hash_password(password=request.password)
@@ -37,6 +37,6 @@ async def create_user(*, session: AsyncSession, request: CreateUserRequest) -> C
     )
 
 
-async def get_user_by_username(*, session: AsyncSession, username: str) -> User | None:
-    user = await session.scalar(select(User).filter_by(username=username))
+async def get_by_email(*, session: AsyncSession, email: str) -> User | None:
+    user = await session.scalar(select(User).filter_by(email=email))
     return user

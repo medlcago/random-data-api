@@ -31,10 +31,10 @@ async def create_user(session: SessionDep, data: CreateUserRequest):
         request=data
     )
     if user is None:
-        logger.info(f"User with username {data.username!r} already exists.")
+        logger.info("User already exists.")
         raise HTTPException(
             status_code=400,
-            detail="The user with this username already exists in the system.",
+            detail="User already exists.",
         )
     return user
 
